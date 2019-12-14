@@ -1,0 +1,24 @@
+{
+  "name": "music_bot_v2",
+  "version": "1.0.0",
+  "description": "Discord bot 2",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Astru43/Discord-music-bot-v2.git"
+  },
+  "author": "Astru43",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/Astru43/Discord-music-bot-v2/issues"
+  },
+  "homepage": "https://github.com/Astru43/Discord-music-bot-v2#readme",
+  "dependencies": {
+    "@discordjs/uws": "^11.149.1",
+    "discord.js": "^11.5.1",
+    "node-opus": "^0.3.3"
+  }
+}
