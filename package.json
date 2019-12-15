@@ -2,7 +2,11 @@
   "name": "music_bot_v2",
   "version": "1.0.0",
   "description": "Discord bot 2",
-  "main": "index.ts",
+  "main": "index.js",
+  "scripts": {
+    "tsc": "tsc",
+    "dev": "ts-node-dev --respawn --transpileOnly ./src/index.ts"
+  },
   "repository": {
     "type": "git",
     "url": "git+https://github.com/Astru43/Discord-music-bot-v2.git"
@@ -20,7 +24,7 @@
     "m3u8stream": "^0.6.2",
     "node-opus": "^0.3.3",
     "simple-youtube-api": "^5.2.1",
-    "ts-node": "^8.5.4",
+    "typescript": "^3.7.3",
     "ytdl-core-discord": "^1.0.3"
   }
 }
