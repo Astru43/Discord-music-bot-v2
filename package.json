@@ -2,7 +2,11 @@
   "name": "music_bot_v2",
   "version": "1.0.0",
   "description": "Discord bot 2",
-  "main": "index.ts",
+  "main": "./bin/index.js",
+  "scripts": {
+    "tsc": "tsc",
+    "dev": "ts-node-dev --respawn --transpileOnly ./src/index.ts"
+  },
   "repository": {
     "type": "git",
     "url": "git+https://github.com/Astru43/Discord-music-bot-v2.git"
