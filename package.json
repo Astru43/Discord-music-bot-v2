@@ -2,23 +2,25 @@
   "name": "music_bot_v2",
   "version": "1.0.0",
   "description": "Discord bot 2",
-  "main": "index.js",
-  "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
-  },
+  "main": "index.ts",
   "repository": {
     "type": "git",
     "url": "git+https://github.com/Astru43/Discord-music-bot-v2.git"
   },
   "author": "Astru43",
-  "license": "ISC",
+  "license": "GPLv3",
   "bugs": {
     "url": "https://github.com/Astru43/Discord-music-bot-v2/issues"
   },
   "homepage": "https://github.com/Astru43/Discord-music-bot-v2#readme",
   "dependencies": {
     "@discordjs/uws": "^11.149.1",
+    "@types/node": "^12.12.17",
     "discord.js": "^11.5.1",
-    "node-opus": "^0.3.3"
+    "m3u8stream": "^0.6.2",
+    "node-opus": "^0.3.3",
+    "simple-youtube-api": "^5.2.1",
+    "ts-node": "^8.5.4",
+    "ytdl-core-discord": "^1.0.3"
   }
 }
