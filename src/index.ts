@@ -1,10 +1,10 @@
 import * as Discord from 'discord.js'
 import { VoiceChannel, Message, VoiceConnection, TextChannel, Guild } from 'discord.js';
 import ytdl from 'ytdl-core-discord';
+import YTDL from 'ytdl-core';
 import {TOKEN, prefix, GOOGLE_API_KEY} from './config';
 import YouTube from 'simple-youtube-api'
 import Video from './@types/simple-youtube-api/structures/Video';
-import Playlist from './@types/simple-youtube-api/structures/Playlist';
 
 const discord = Discord;
 const bot = new discord.Client();
@@ -18,11 +18,12 @@ type Song = {
 };
 
 type ServerQueue = {
-    songs?: [Song],
+    songs: [Song],
     connection: VoiceConnection | null,
     voiceChannel: VoiceChannel,
     textChannel: TextChannel,
     playing: boolean,
+    volume: number,
 };
 
 var queue: Map<string, ServerQueue> = new Map<string, ServerQueue>();
@@ -46,11 +47,11 @@ bot.on("message", async msg => {
             //if (args[0] != "playlist") {
                 try {
                     var video = await yt.getVideoByID(args[0]);
-                    msg.channel.send(video?.id + " 1");
+                    //msg.channel.send(video?.title + " from try 1");
                 } catch (error) {
                     try {
                         var video = await yt.getVideo(args[0]);
-                        msg.channel.send(video?.id + " 2");
+                        //msg.channel.send(video?.title + " from try 2");
                     } catch (error) {
                         console.error(args[0]);
                         console.error(error);
@@ -66,7 +67,9 @@ bot.on("message", async msg => {
             else msg.channel.send(msg.content.substring(prefix.length + command.length + 1));
             break;
         case "clear":
+                if (!msg.member.roles.some(r => ["Dev"].includes(r.name))) return msg.channel.send(`You don't have premission to use this command.`);
                 queue.delete(msg.guild.id);
+                msg.channel.send("Deleted server queue");
                 break;
     }
 });
@@ -81,20 +84,15 @@ async function video_handler(video: Video , msg: Message, vc: VoiceChannel) {
     }
 
     if (!serverQueue) {
-        var queueConstruct: ServerQueue/*{
-            songs?: [Song];
-            connection: VoiceConnection | null,
-            voiceChannel: VoiceChannel,
-            textChannel: typeof msg.channel,
-            playing: boolean,
-        }*/ = {
+        var queueConstruct: ServerQueue = {
             textChannel: (msg.channel as TextChannel),
             voiceChannel: vc,
             playing: true,
             connection: null,
+            songs: [song],
+            volume: 0.6,
         }
         queue.set(msg.guild.id, queueConstruct);
-        queueConstruct.songs = [song];
         console.log(`[${queueConstruct.songs.length}]`);
         try {
             queueConstruct.connection = await vc.join();
@@ -105,13 +103,32 @@ async function video_handler(video: Video , msg: Message, vc: VoiceChannel) {
             return console.error(error);
         }
     } else {
-        serverQueue.songs?.push(song);
-        console.log(`[${serverQueue.songs?.length}]`);
+        serverQueue.songs.push(song);
+        console.log(`[${serverQueue.songs.length}]`);
+        msg.channel.send(`Song **${video.title}** added to queue.`);
     }
 }
 
-function Play(guild: Guild["id"], song: Song) {
+async function Play(guild: Guild["id"], song?: Song) {
+    var serverQueue = queue.get(guild);
 
+    if (!serverQueue) return console.error("Invalid server queue")
+    if (!song) {
+        serverQueue.voiceChannel.leave();
+        queue.delete(guild);
+        return;
+    }
+
+    var dispatcher = serverQueue.connection?.playStream(YTDL(song.url, { filter: "audioonly" }), { bitrate: 192000 });
+    dispatcher?.on("end", reason => {
+        console.log("End reason: " + reason);
+        serverQueue?.songs.shift();
+        Play(guild, serverQueue?.songs[0]);
+    });
+    dispatcher?.on("error", error => console.error("Error: " + error));
+    dispatcher?.setVolumeLogarithmic(serverQueue.volume / 5);
+
+    serverQueue.textChannel.send(`Now starting **${serverQueue.songs[0].title}**`);
 }
 
 bot.login(TOKEN);
