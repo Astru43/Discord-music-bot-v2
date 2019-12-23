@@ -20,7 +20,7 @@
   "dependencies": {
     "@discordjs/uws": "^11.149.1",
     "@types/node": "^12.12.17",
-    "discord.js": "^11.5.1",
+    "discord.js": "github:discordjs/discord.js",
     "m3u8stream": "^0.6.2",
     "node-opus": "^0.3.3",
     "simple-youtube-api": "^5.2.1",
