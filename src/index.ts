@@ -4,6 +4,7 @@ import ytdl from 'ytdl-core';
 import {TOKEN, prefix, GOOGLE_API_KEY} from './config';
 import YouTube from 'simple-youtube-api'
 import Video from './@types/simple-youtube-api/structures/Video';
+import { Server } from 'http';
 
 const discord = Discord;
 const bot = new discord.Client();
@@ -40,6 +41,19 @@ bot.on("message", async msg => {
     var args = msg.content.substring(prefix.length + command.length + 1).split(' ');
     
     switch(command) {
+        /*case "stop":
+            var ServerQueue = queue.get((msg.guild?.id as string));
+            if (!ServerQueue) return msg.channel?.send(`Not playing anything.`);
+            else if (!ServerQueue.songs) return msg.channel?.send(`Queue dosen't have any songs.`);
+            
+            break;*/
+        case "pause":
+            var ServerQueue = queue.get((msg.guild?.id as string));
+            if (!ServerQueue) return msg.channel?.send(`Not playing anything.`);
+            if (!ServerQueue.playing) return msg.channel?.send(`Already paused, type \`\`${prefix}play\`\` to continue.`);
+            ServerQueue.playing = false;
+            ServerQueue.connection?.dispatcher.pause(true);
+            break;
         case "vol":
         case "volume":
             if (!args[0]) {
@@ -53,8 +67,26 @@ bot.on("message", async msg => {
                 ServerQueue.connection?.dispatcher.setVolumeLogarithmic(ServerQueue.volume / 5);
                 return msg.channel?.send(`Set volume to: ${args[0]}`);
             } else return msg.channel?.send(`Given value is not a number: ${args[0]}`);
+        case "s":
+        case "skip":    
+            var ServerQueue = queue.get((msg.guild?.id as string));
+            if (!ServerQueue) return msg.channel?.send(`There is nothing to skip.`);
+            ServerQueue.connection?.dispatcher.end();
+            break;
         case "p":
         case "play":
+            var ServerQueue = queue.get((msg.guild?.id as string));
+            if (ServerQueue && !args[0]) {
+                if (ServerQueue.playing) break;
+                else {
+                    ServerQueue.playing = true;
+                    ServerQueue.connection?.dispatcher.resume();
+                    return;
+                }
+            }
+
+
+
             if (!msg.member?.voice.channel) return msg.channel?.send(`You need to be in a voice channel.`);
             var vc: VoiceChannel = msg.member?.voice.channel;
             var video: Video | null = null;
@@ -105,7 +137,6 @@ async function video_handler(video: Video , msg: Message | PartialMessage, vc: V
             volume: 0.6,
         }
         queue.set((msg.guild?.id as string), queueConstruct);
-        console.log(`[${queueConstruct.songs.length}]`);
         try {
             queueConstruct.connection = await vc.join();
             Play((msg.guild?.id as string), queueConstruct.songs[0]);
@@ -139,6 +170,7 @@ async function Play(guild: Guild["id"], song?: Song) {
     dispatcher?.on("error", error => console.error("Error: " + error));
     dispatcher?.setVolumeLogarithmic(serverQueue.volume / 5);
     
+    console.log(`[${serverQueue.songs.length}]`);
     serverQueue.textChannel.send(`Now starting **${serverQueue.songs[0].title}**`);
 }
 
