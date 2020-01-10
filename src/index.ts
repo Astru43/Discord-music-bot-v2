@@ -4,7 +4,6 @@ import ytdl from 'ytdl-core';
 import {TOKEN, prefix, GOOGLE_API_KEY} from './config';
 import YouTube from 'simple-youtube-api'
 import Video from './@types/simple-youtube-api/structures/Video';
-import { Server } from 'http';
 
 const discord = Discord;
 const bot = new discord.Client();
@@ -86,25 +85,57 @@ bot.on("message", async msg => {
             }
 
 
-
             if (!msg.member?.voice.channel) return msg.channel?.send(`You need to be in a voice channel.`);
             var vc: VoiceChannel = msg.member?.voice.channel;
             var video: Video | null = null;
-            //if (args[0] != "playlist") {
-                try {
-                    var video = await yt.getVideoByID(args[0]);
-                } catch (error) {
-                    try {
-                        var video = await yt.getVideo(args[0]);
-                    } catch (error) {
-                        console.error(args[0]);
-                        console.error(error);
-                        return msg.channel?.send("Can't find video specified");
-                    }
-                }
-            //} else {
-                //yt.getPlaylist(args[1]);
-            return video_handler((video as Video), msg, vc);
+
+            let i = 0;
+            while (args[i]) {
+                switch(args[i]) {
+                    case "-p":
+                    case "-playlist":
+                        break;
+                    case "-v":
+                    case "-video":
+                        i++
+                        while (args[i]) {
+                            if (args[i].startsWith('-')) break;
+                            try {
+                                var video = await yt.getVideoByID(args[i]);
+                            } catch (error) {
+                                try {
+                                    var video = await yt.getVideo(args[i]);
+                                } catch (error) {
+                                    console.error(args[i]);
+                                    console.error(error);
+                                    msg.channel?.send("Can't find video specified");
+                                }
+                            }
+                            video_handler((video as Video), msg, vc);
+                            i++
+                        }
+                        break;
+                    default:
+                        while (args[i]) {
+                            if (args[i].startsWith('-')) break;
+                            try {
+                                var video = await yt.getVideoByID(args[i]);
+                            } catch (error) {
+                                try {
+                                    var video = await yt.getVideo(args[i]);
+                                } catch (error) {
+                                    console.error(args[i]);
+                                    console.error(error);
+                                    msg.channel?.send("Can't find video specified");
+                                }
+                            }
+                            video_handler((video as Video), msg, vc);
+                            i++
+                        }
+                        break;
+                }          
+            }
+            break;
         case "test":
             msg.channel?.send("Test succeeded.");
             if (args.length == 1 && args[0] == '') break;
@@ -161,9 +192,10 @@ async function Play(guild: Guild["id"], song?: Song) {
         queue.delete(guild);
         return;
     }
-
+    
     var dispatcher = serverQueue.connection?.play(ytdl(song.url, { filter: "audioonly" }), { bitrate: 192000, volume: true, highWaterMark: 256 });
     dispatcher?.on("finish", () => {
+        if (dispatcher?.streamTime) console.log(Math.floor((dispatcher.streamTime / 1000) / 60) + ':' + Math.floor((dispatcher.streamTime / 1000) % 60));
         serverQueue?.songs.shift();
         Play(guild, serverQueue?.songs[0]);
     });
