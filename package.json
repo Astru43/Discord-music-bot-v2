@@ -18,7 +18,6 @@
   },
   "homepage": "https://github.com/Astru43/Discord-music-bot-v2#readme",
   "dependencies": {
-    "@discordjs/uws": "^11.149.1",
     "@types/node": "^12.12.17",
     "discord.js": "github:discordjs/discord.js",
     "ffmpeg-static": "^2.7.0",

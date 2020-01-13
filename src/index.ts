@@ -4,6 +4,7 @@ import ytdl from 'ytdl-core';
 import {TOKEN, prefix, GOOGLE_API_KEY} from './config';
 import YouTube from 'simple-youtube-api'
 import Video from './@types/simple-youtube-api/structures/Video';
+import Playlist from './@types/simple-youtube-api/structures/Playlist';
 
 const discord = Discord;
 const bot = new discord.Client();
@@ -17,7 +18,7 @@ type Song = {
 };
 
 type ServerQueue = {
-    songs: [Song],
+    songs: Song[],
     connection: VoiceConnection | null,
     voiceChannel: VoiceChannel,
     textChannel: TextChannel,
@@ -88,12 +89,30 @@ bot.on("message", async msg => {
             if (!msg.member?.voice.channel) return msg.channel?.send(`You need to be in a voice channel.`);
             var vc: VoiceChannel = msg.member?.voice.channel;
             var video: Video | null = null;
+            var playlist: Playlist | null = null;
 
             let i = 0;
             while (args[i]) {
                 switch(args[i]) {
                     case "-p":
                     case "-playlist":
+                        i++
+                        while (args[i]) {
+                            if (args[i].startsWith('-')) break;
+                            try {
+                                var playlist = await yt.getPlaylistByID(args[i]);
+                            } catch (error) {
+                                try {
+                                    var playlist = await yt.getPlaylist(args[i]);
+                                } catch (error) {
+                                    console.error(args[i]);
+                                    console.error(error);
+                                    msg.channel?.send("Can't find playlist specified");
+                                }
+                            }
+                            playlist_handler((playlist as Playlist), msg, vc);
+                            i++
+                        }
                         break;
                     case "-v":
                     case "-video":
@@ -148,6 +167,54 @@ bot.on("message", async msg => {
                 break;
     }
 });
+
+async function playlist_handler(playlist: Playlist, msg: Message | PartialMessage, vc: VoiceChannel) {
+    var serverQueue = queue.get((msg.guild?.id as string));
+    if (!serverQueue) {
+        var queueConstruct: ServerQueue = {
+            textChannel: (msg.channel as TextChannel),
+            voiceChannel: vc,
+            playing: true,
+            connection: null,
+            volume: 0.6,
+            songs: Array<Song>()
+        }
+        var videos = await playlist.getVideos();
+        videos.forEach(video => {
+            var song: Song = {
+                id: video.id,
+                title: video.title,
+                dur: video.duration,
+                url: `https://youtube.com/watch?v=${video.id}`,
+            }
+
+            queueConstruct.songs.push(song);
+        });
+        queue.set((msg.guild?.id as string), queueConstruct)
+        try {
+            queueConstruct.connection = await vc.join();
+            Play((msg.guild?.id as string), queueConstruct.songs[0]);
+        } catch (error) {
+            msg.channel?.send(`Can't join voice channel.`);
+            queue.delete((msg.guild?.id as string));
+            return console.error(error);
+        }
+    } else {
+        var videos = await playlist.getVideos();
+        videos.forEach(video => {
+            var song: Song = {
+                id: video.id,
+                title: video.title,
+                dur: video.duration,
+                url: `https://youtube.com/watch?v=${video.id}`,
+            }
+
+            serverQueue?.songs.push(song);
+        });
+        console.log(`[${serverQueue.songs.length}]`);
+        console.log(`Added ${playlist.length} videos from ${playlist.title}`);
+    }
+}
 
 async function video_handler(video: Video , msg: Message | PartialMessage, vc: VoiceChannel) {
     var serverQueue = queue.get((msg.guild?.id as string));
