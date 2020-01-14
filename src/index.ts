@@ -24,6 +24,7 @@ type ServerQueue = {
     textChannel: TextChannel,
     playing: boolean,
     volume: number,
+    autoplaylist: boolean,
 };
 
 var queue: Map<string, ServerQueue> = new Map<string, ServerQueue>();
@@ -134,6 +135,9 @@ bot.on("message", async msg => {
                             i++
                         }
                         break;
+                    case ""://Auto Playlist
+                        auto_playlist_handler(msg, vc);
+                        break;
                     default:
                         while (args[i]) {
                             if (args[i].startsWith('-')) break;
@@ -168,6 +172,10 @@ bot.on("message", async msg => {
     }
 });
 
+async function auto_playlist_handler(msg: Message | PartialMessage, vc: VoiceChannel) {
+    //Not implomented yet
+}
+
 async function playlist_handler(playlist: Playlist, msg: Message | PartialMessage, vc: VoiceChannel) {
     var serverQueue = queue.get((msg.guild?.id as string));
     if (!serverQueue) {
@@ -177,6 +185,7 @@ async function playlist_handler(playlist: Playlist, msg: Message | PartialMessag
             playing: true,
             connection: null,
             volume: 0.6,
+            autoplaylist: false,
             songs: Array<Song>()
         }
         var videos = await playlist.getVideos();
@@ -233,6 +242,7 @@ async function video_handler(video: Video , msg: Message | PartialMessage, vc: V
             connection: null,
             songs: [song],
             volume: 0.6,
+            autoplaylist: false,
         }
         queue.set((msg.guild?.id as string), queueConstruct);
         try {
